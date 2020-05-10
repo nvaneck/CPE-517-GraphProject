@@ -29,7 +29,7 @@ char* MultiStatusArrBFS(graph<long, long, int, long, long, char>* ginst,int sour
 
         
             //change while to for look for multithreading 
-            #pragma omp parallell for 
+            #pragma omp parallel for 
             for(ptr = 0; ptr < ginst->vert_count; ptr++){
                 if (statusArray[ptr] == currLevel) {
                     int beg = ginst->beg_pos[ptr];
