@@ -1,4 +1,5 @@
 #include <iostream>
+#include <omp.h>
 #include "graph.h"
 
 char* MultiStatusArrBFS(graph<long, long, int, long, long, char>* ginst,int source, int thread_count){
@@ -6,12 +7,14 @@ char* MultiStatusArrBFS(graph<long, long, int, long, long, char>* ginst,int sour
     int ptr;
     int j;
 
+    omp_set_num_threads(thread_count);
+
     char* statusArray = new char[ginst->vert_count];
     //for (int i = 0; i < ginst->vert_count; i++)
     //  statusArray[i] = -1; //-1 means unvisited;
 
     //Initializing table in parallell(MultiThreads)
-    #pragma omp parallell for 
+    #pragma omp parallel for 
     for(int i = 0; i < ginst->vert_count; ++i)
     {
         statusArray[i] = -1;
