@@ -24,36 +24,38 @@ char* MultiStatusArrBFS(graph<long, long, int, long, long, char>* ginst,int sour
     int myFrontierCount = 0;
     int currLevel = 0; 
 
+    #pragma omp parallel num_threads(thread_count)
+        int mymyFrontierCount = 0;
+        int mycurrLevel = 0; 
+        while (true){ 
 
-    while (true){ 
+            
+                //change while to for look for multithreading 
+                #pragma omp parallel for             
+                for(ptr = 0; ptr < ginst->vert_count; ptr++){
+                    if (statusArray[ptr] == mycurrLevel) {
+                        int beg = ginst->beg_pos[ptr];
+                        int end = ginst->beg_pos[ptr + 1];
 
-        
-            //change while to for look for multithreading 
-            #pragma omp parallel for 
-            for(ptr = 0; ptr < ginst->vert_count; ptr++){
-                if (statusArray[ptr] == currLevel) {
-                    int beg = ginst->beg_pos[ptr];
-                    int end = ginst->beg_pos[ptr + 1];
-
-                    for (j = beg; j < end; j++) {
-                        if (statusArray[ginst->csr[j]] == -1) {
-                            statusArray[ginst->csr[j]] = currLevel+1;
+                        for (j = beg; j < end; j++) {
+                            if (statusArray[ginst->csr[j]] == -1) {
+                                statusArray[ginst->csr[j]] = mycurrLevel+1;
+                            }
                         }
                     }
-                }
 
-                else if (statusArray[ptr] != currLevel) { 
-                    myFrontierCount++;
-                }
-            }    
-            currLevel++;
+                    else if (statusArray[ptr] != mycurrLevel) { 
+                        mymyFrontierCount++;
+                    }
+                }    
+                mycurrLevel++;
 
-            if (myFrontierCount == ginst->vert_count) {
-                std::cout<<"Runtime: "<<wtime()-tm<<" second(s) for " <<thread_count<<" threads.\n";
-                return statusArray;
-            }
-            myFrontierCount = 0;
-    }
+                if (mymyFrontierCount == ginst->vert_count) {
+                    std::cout<<"Runtime: "<<wtime()-tm<<" second(s) for " <<thread_count<<" threads.\n";
+                    return statusArray;
+                }
+                mymyFrontierCount = 0;
+        }
 }
 
 
@@ -68,7 +70,7 @@ char* MultiFrontierQueueBFS(graph<long, long, /*int*/ long, long, long, /*char*/
     //}
 
     //Initializing table in parallell(MultiThreads)
-    #pragma omp parallell for (int i = 0; i < ginst->vert_count; ++i)
+    #pragma omp parallel for (int i = 0; i < ginst->vert_count; ++i)
     {
         statusArray[i] = -1;
     }
