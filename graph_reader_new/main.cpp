@@ -53,6 +53,47 @@ char* BFSTraverse(graph<long, long, /*int*/ long, long, long, /*char*/ long>* gi
     }
 }
 
+// Algorithm 2: Single-threaded BFS Status Array
+// Provided in the associated docs
+char* BFSTraverse2(graph<long,long,/*int*/long,long,long,/*char*/long>* ginst, int source){
+    double tm = wtime();
+    int ptr;
+    int j;
+    char* statusArray = new char[ginst->vert_count];
+    //Mark all verts as unvisited
+    for(int i = 0; i < ginst->vert_count; i++){
+        statusArray[i] = -1;
+    }
+    //Mark Source as visited
+    statusArray[source] = 0;
+    int myFrontierCount = 0;
+    int currLevel = 0;
+    while(true){
+        ptr = 0;
+        while(ptr < ginst->vert_count){
+            if(statusArray[ptr] == currLevel){
+                int beg = ginst->beg_pos[ptr];
+                int end = ginst->beg_pos[ptr+1];
+                for(j = beg; j < end; j++){
+                    if(statusArray[ginst->csr[j]] == -1){
+                        statusArray[ginst->csr[j]] = currLevel + 1;
+                    }
+                }
+            }
+            else if(statusArray[ptr] != currLevel){
+                myFrontierCount++;
+            }
+            ptr++;
+        }
+        currLevel++;
+        if(myFrontierCount == ginst->vert_count){
+            std::cout<<"Runtime: "<<wtime()-tm<<" second(s).\n";
+            return statusArray;
+        }
+        myFrontierCount = 0;
+    }
+}
+
 int main(int args, char **argv)
 {
 	std::cout<<"Input: ./exe beg csr weight\n";
@@ -92,7 +133,7 @@ int main(int args, char **argv)
         std::cout<<"\n";
     }
      */
-	char*statusArray = BFSTraverse(ginst,0);
+	char*statusArray = BFSTraverse2(ginst,0);
 
 	return 0;
 }
