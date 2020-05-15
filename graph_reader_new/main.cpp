@@ -1,157 +1,145 @@
-#include <iostream>
+#include "stdafx.h"
 #include <omp.h>
-#include "graph.h"
+#include <chrono>
+#include "C:\msys64\home\Frank\CPE_517\CPE-517-GraphProject\graph_reader_new\graph.h"
+#pragma warning(disable : 4996)
 
-char* MultiStatusArrBFS(graph<long, long, int, long, long, char>* ginst,int source, int thread_count){
-    double tm = wtime();
-    int ptr;
-    int j;
 
-    omp_set_num_threads(thread_count);
+char* MultiStatusArrBFS(graph<long, long, long, long, long, long>* ginst, int source, int thread_count) {
+	auto start_time = std::chrono::high_resolution_clock::now();
+	int ptr;
+	int j;
 
-    char* statusArray = new char[ginst->vert_count];
-    //for (int i = 0; i < ginst->vert_count; i++)
-    //  statusArray[i] = -1; //-1 means unvisited;
+	omp_set_num_threads(thread_count);
 
-    //Initializing table in parallell(MultiThreads)
-    #pragma omp parallel for 
-    for(int i = 0; i < ginst->vert_count; ++i)
-    {
-        statusArray[i] = -1;
-    }
-    
-    statusArray[source] = 0;
-    int myFrontierCount = 0;
-    int currLevel = 0; 
+	char* statusArray = new char[ginst->vert_count];
+	//for (int i = 0; i < ginst->vert_count; i++)
+	//  statusArray[i] = -1; //-1 means unvisited;
 
-    #pragma omp parallel num_threads(thread_count) 
-        while (true){ 
-            int mymyFrontierCount = 0;
-            int mycurrLevel = 0; 
-            
-                //change while to for look for multithreading 
-                #pragma omp parallel for             
-                for(ptr = 0; ptr < ginst->vert_count; ptr++){
-                    if (statusArray[ptr] == mycurrLevel) {
-                        int beg = ginst->beg_pos[ptr];
-                        int end = ginst->beg_pos[ptr + 1];
+	//Initializing table in parallell(MultiThreads)
+#pragma omp parallel for 
+	for (int i = 0; i < ginst->vert_count; ++i)
+	{
+		statusArray[i] = -1;
+	}
 
-                        for (j = beg; j < end; j++) {
-                            if (statusArray[ginst->csr[j]] == -1) {
-                                statusArray[ginst->csr[j]] = mycurrLevel+1;
-                            }
-                        }
-                    }
+	statusArray[source] = 0;
+	int myFrontierCount = 0;
+	int currLevel = 0;
 
-                    else if (statusArray[ptr] != mycurrLevel) { 
-                        mymyFrontierCount++;
-                    }
-                }    
-                mycurrLevel++;
+#pragma omp parallel num_threads(thread_count)
+	while (true) {
 
-                if (mymyFrontierCount == ginst->vert_count) {
-                    std::cout<<"Runtime: "<<wtime()-tm<<" second(s) for " <<thread_count<<" threads.\n";
-                    return statusArray;
-                }
-                mymyFrontierCount = 0;
-        }
+		long mymyFrontierCount = 0;
+		int mycurrLevel = 0;
+		//change while to for look for multithreading 
+#pragma omp parallel for      
+		for (ptr = 0; ptr < ginst->vert_count; ptr++) {
+			if (statusArray[ptr] == mycurrLevel) {
+				int beg = ginst->beg_pos[ptr];
+				int end = ginst->beg_pos[ptr + 1];
+
+				for (j = beg; j < end; j++) {
+					if (statusArray[ginst->csr[j]] == -1) {
+						statusArray[ginst->csr[j]] = mycurrLevel + 1;
+					}
+				}
+			}
+
+			else if (statusArray[ptr] != mycurrLevel) {
+				mymyFrontierCount++;
+			}
+		}
+		mycurrLevel++;
+
+		if (mymyFrontierCount == ginst->vert_count) {
+			auto end_time = std::chrono::high_resolution_clock::now();
+			auto time = end_time - start_time;
+			std::cout << "Runtime: " << time / std::chrono::milliseconds(1) << " millisecond(s) for " << thread_count << " threads.\n";
+			return statusArray;
+		}
+		mymyFrontierCount = 0;
+	}
+	
 }
 
 
-char* MultiFrontierQueueBFS(graph<long, long, int, long, long, char>* ginst, int source, int thread_count){
-    double tm = wtime();
-    int j,frontier = 0;
-    omp_set_num_threads(thread_count);
- 
-    char* statusArray = new char[ginst->vert_count];
-    //Marks all verts as unvisited
-    // for(int i = 0; i < ginst->vert_count; i++){
-    //   statusArray[i] = -1;
-    //}
+char* MultiFrontierQueueBFS(graph<long, long, /*int*/ long, long, long, /*char*/ long>* ginst, int source, int thread_count) {
+	int j, frontier = 0;
 
-    //Initializing table in parallell(MultiThreads)
-    #pragma omp parallel for 
-    for(int i = 0; i < ginst->vert_count; ++i)
-    {
-        statusArray[i] = -1;
-    }
+	char* statusArray = new char[ginst->vert_count];
+	//Marks all verts as unvisited
+	// for(int i = 0; i < ginst->vert_count; i++){
+	//   statusArray[i] = -1;
+	//}
 
-    int* currFrontierQueue = new int[ginst->vert_count];
-    int* nextFrontierQueue = new int[ginst->vert_count];
-    int currFrontierSize = 0;
-    int nextFrontierSize = 0;
-    currFrontierQueue[currFrontierSize] = source;
-    currFrontierSize++;
-    statusArray[source] = 0;
-    int myFrontierIndex = 0;
-    int currLevel = 1;
+	//Initializing table in parallell(MultiThreads)
+#pragma omp parallel for 
+	for (int i = 0; i < ginst->vert_count; ++i)
+	{
+		statusArray[i] = -1;
+	}
 
-    #pragma omp parallel num_threads(thread_count)
+	int* currFrontierQueue = new int[ginst->vert_count];
+	int* nextFrontierQueue = new int[ginst->vert_count];
+	int currFrontierSize = 0;
+	int nextFrontierSize = 0;
+	currFrontierQueue[currFrontierSize] = source;
+	currFrontierSize++;
+	statusArray[source] = 0;
+	int myFrontierIndex = 0;
+	int currLevel = 1;
 
-        while(true){
-            int myj,myfrontier = 0;
-            int* mycurrFrontierQueue = new int[ginst->vert_count];
-            int* mynextFrontierQueue = new int[ginst->vert_count];
-            int mycurrFrontierSize = 0;
-            int mynextFrontierSize = 0;
-            mycurrFrontierQueue[mycurrFrontierSize] = source;
-            mycurrFrontierSize++;
-            mystatusArray[source] = 0;
-            int mymyFrontierIndex = 0;
-            int mycurrLevel = 1;
-            
-            #pragma omp parallel for 
-            for(mymyFrontierIndex = 0; mymyFrontierIndex < mycurrFrontierSize; mymyFrontierIndex++) {
-                myfrontier = mycurrFrontierQueue[mymyFrontierIndex];
-                long int beg = ginst->beg_pos[myfrontier];
-                long int end = ginst->beg_pos[myfrontier+1];
+	while (true) {
+		while (myFrontierIndex < currFrontierSize) {
+			frontier = currFrontierQueue[myFrontierIndex];
+			long int beg = ginst->beg_pos[frontier];
+			long int end = ginst->beg_pos[frontier + 1];
 
-                for(myj = beg; myj < end; myj++){
-                    if(mystatusArray[ginst->csr[myj]] == -1){
-                        mystatusArray[ginst->csr[myj]] = mycurrLevel;
-                        mynextFrontierQueue[mynextFrontierSize] = ginst->csr[myj];
-                        mynextFrontierSize++;
-                    }
-                }
-                
-            }
+			for (j = beg; j < end; j++) {
+				if (statusArray[ginst->csr[j]] == -1) {
+					statusArray[ginst->csr[j]] = currLevel;
+					nextFrontierQueue[nextFrontierSize] = ginst->csr[j];
+					nextFrontierSize++;
+				}
+			}
+			myFrontierIndex++;
+		}
+		if (nextFrontierSize == 0) {
+			std::cout << "Runtime: second(s).\n";
+			return statusArray;
+		}
 
-            if(mynextFrontierSize == 0){
-                    std::cout<<"Runtime: "<<wtime()-tm<<" second(s) for " <<thread_count<<" threads.\n";
-                        return mystatusArray;
-            }
+		//Swap current and next frontier queue
+		currFrontierSize = nextFrontierSize;
+		myFrontierIndex = 0;
+		nextFrontierSize = 0;
 
-            //Swap current and next frontier queue
-            mycurrFrontierSize = mynextFrontierSize;
-            mymyFrontierIndex = 0;
-            mynextFrontierSize = 0;
-
-            int*temp = mycurrFrontierQueue;
-            mycurrFrontierQueue = mynextFrontierQueue;
-            mynextFrontierQueue = temp;
-            myurrLevel++;
-        }
+		int*temp = currFrontierQueue;
+		currFrontierQueue = nextFrontierQueue;
+		nextFrontierQueue = temp;
+		currLevel++;
+	}
 }
 
 int main(int args, char **argv)
 {
-    std::cout<<"Input: ./exe beg csr weight\n";
-    if(args!=4){std::cout<<"Wrong input\n"; return -1;}
+	std::cout << "Input: ./exe beg csr weight\n";
+	if (args != 4) { std::cout << "Wrong input\n"; return -1; }
 
-    const char *beg_file=argv[1];
-    const char *csr_file=argv[2];
-    const char *weight_file=argv[3];
+	const char *beg_file = argv[1];
+	const char *csr_file = argv[2];
+	const char *weight_file = argv[3];
 
-    graph<long, long, int, long, long, char>
-    *ginst = new graph
-    <long, long, int, long, long, char>
-    (beg_file,csr_file,weight_file);
+	graph<long, long, long, long, long, long> *ginst = new graph
+	<long, long, long, long, long, long>
+		(beg_file, csr_file, weight_file);
 
-    char*statusArray = MultiStatusArrBFS(ginst,0, 1);
-    char*statusArray = MultiStatusArrBFS(ginst,0, 2);
-    char*statusArray = MultiStatusArrBFS(ginst,0, 4);
-    char*statusArray = MultiStatusArrBFS(ginst,0, 8);
-    char*statusArray = MultiStatusArrBFS(ginst,0, 16);
+	char*statusArray1 = MultiStatusArrBFS(ginst, 0, 1);
+	char*statusArray2= MultiStatusArrBFS(ginst, 0, 2);
+	char*statusArray3 = MultiStatusArrBFS(ginst, 0, 4);
+	char*statusArray4 = MultiStatusArrBFS(ginst, 0, 8);
+	char*statusArray5 = MultiStatusArrBFS(ginst, 0, 16);
 
-    return 0;
+	return 0;
 }

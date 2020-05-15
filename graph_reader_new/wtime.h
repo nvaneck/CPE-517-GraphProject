@@ -1,19 +1,17 @@
 #ifndef __H_TIME__
 #define __H_TIME__
+#include <chrono>
 
-#include <sys/time.h>
+
+//#include <sys/time.h>
 #include <stdlib.h>
 
-inline double wtime()
+inline std::chrono::steady_clock::time_point wtime()
 {
-	double time[2];	
-	struct timeval time1;
-	gettimeofday(&time1, NULL);
+	
+	auto time = std::chrono::high_resolution_clock::now();
 
-	time[0]=time1.tv_sec;
-	time[1]=time1.tv_usec;
-
-	return time[0]+time[1]*1.0e-6;
+	return time;
 }
 
 #endif
